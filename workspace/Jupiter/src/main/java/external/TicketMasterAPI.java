@@ -192,8 +192,6 @@ public class TicketMasterAPI {
 		return itemList;
 	}
 
-
-    
     
 	private void queryAPI(double lat, double lon) {
 		JSONArray events = search(lat, lon, null);
