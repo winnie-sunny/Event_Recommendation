@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -40,20 +41,27 @@ public class SearchItem extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		String userId = request.getParameter("user_id");
 		double lat = Double.parseDouble(request.getParameter("lat"));
 		double lon = Double.parseDouble(request.getParameter("lon"));
 		// Term can be empty or null.
 		String term = request.getParameter("term");
 
-		DBConnection connection = DBConnectionFactory.getConnection("mysql");
-		List<Item> items = connection.searchItems(lat, lon, term);
- 		connection.close();
+		DBConnection conn = DBConnectionFactory.getConnection("mysql");
+		List<Item> items = conn.searchItems(lat, lon, term);
+
+		Set<String> favorite = conn.getFavoriteItemIds(userId);
+		conn.close();
 
 		List<JSONObject> list = new ArrayList<>();
 		try {
 			for (Item item : items) {
-				// Add a thin version of item object
+				// Add a thin version of restaurant object
 				JSONObject obj = item.toJSONObject();
+				// Check if this is a favorite one.
+				// This field is required by frontend to correctly display favorite items.
+				obj.put("favorite", favorite.contains(item.getItemId()));
+
 				list.add(obj);
 			}
 		} catch (Exception e) {
@@ -61,9 +69,10 @@ public class SearchItem extends HttpServlet {
 		}
 		JSONArray array = new JSONArray(list);
 		RpcHelper.writeJsonArray(response, array);
-
-
 	}
+
+
+
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
